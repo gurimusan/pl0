@@ -42,5 +42,6 @@ RelAddr relAddr(int ti);
 int val(int ti);
 /* 名前表[ti]の関数のパラメタ数を返す */
 int pars(int ti);
+char* tname(int ti);
 /* そのブロックで実行時に必要とするメモリー容量 */
 int frameL();

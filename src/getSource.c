@@ -38,6 +38,8 @@ static char nextChar();
 static int isKeySym(KeyId k);
 /* tは予約語か？ */
 static int isKeyWd(KeyId k);
+/* 予約語の検索 */
+static int findKeyWd(char *m);
 /* トークンの前のスペースの印字 */
 static void printSpaces();
 /* トークンの印字 */
@@ -51,19 +53,19 @@ struct keyWd {
 
 /* 予約語や記号と名前（KeyId）の表 */
 static struct keyWd KeyWdT[] = {
-    {"if", If},
-    {"do", Do},
-    {"end", End},
-    {"odd", Odd},
-    {"var", Var},
-    {"then", Then},
     {"begin", Begin},
     {"const", Const},
+    {"do", Do},
+    {"end", End},
+    {"function", Func},
+    {"if", If},
+    {"odd", Odd},
+    {"return", Ret},
+    {"then", Then},
+    {"var", Var},
     {"while", While},
     {"write", Write},
-    {"return", Ret},
     {"writeln", WriteLn},
-    {"function", Func},
     {"$dummy1", end_of_KeyWd},
     {"+", Plus},
     {"-", Minus},
@@ -98,38 +100,6 @@ int isKeySym(KeyId k)
     }
     return (k < end_of_KeySym);
 }
-
-/* 空白や改行の印字 */
-static void printSpaces()
-{
-    while (CR-->0) {
-        fprintf(fptex, "\\ \\par\n");
-    }
-    while (spaces-->0) {
-        fprintf(fptex, "\\ ");
-    }
-    CR = 0;
-    spaces = 0;
-}
-
-/* 現在のトークンの印字 */
-void printcToken()
-{
-    int i = (int)cToken.kind;
-    if (printed) {
-        printed = 0;
-        return;
-    }
-
-    /* トークンの前の空白や改行印字 */
-    printSpaces();
-
-    // 予約語
-    if (i < end_of_KeyWd) {
-        fprintf(fptex, "{\\bf %s}", KeyWdT[i].word);
-    }
-}
-
 
 /* 文字の種類を示す表にする */
 static KeyId charClassT[256];
@@ -279,13 +249,13 @@ void errorDelete()
     int i = (int)cToken.kind;
     printSpaces();
     printed = 1;
-    if (i < end_of_KeyWd) {             // 予約語
+    if (i < end_of_KeyWd) {             /* 予約語 */
         fprintf(fptex, "\\delete{{\\bf %s}}", KeyWdT[i].word);
-    } else if (i < end_of_KeySym) {     // 演算子か区切り記号
+    } else if (i < end_of_KeySym) {     /* 演算子か区切り記号 */
         fprintf(fptex, "\\delete{{$%s$}}", KeyWdT[i].word);
-    } else if (i == (int)Id) {          // Identifier
+    } else if (i == (int)Id) {          /* Identifier */
         fprintf(fptex, "\\delete{%s}", cToken.u.id);
-    } else if (i == (int)Num) {         // Num
+    } else if (i == (int)Num) {         /* Num */
         fprintf(fptex, "\\delete{%d}", cToken.u.value);
     }
 }
@@ -338,9 +308,6 @@ char nextChar()
 Token nextToken()
 {
     int i = 0;
-    int cmp;
-    int lft;
-    int rgt;
     int num;
     KeyId cc;
     Token temp;
@@ -380,27 +347,14 @@ Token nextToken()
                 i = MAXNAME - 1;
             }
             ident[i] = '\0';
-            // 予約語の場合
-            lft = 0;
-            rgt = end_of_KeyWd;
-            do {
-                i = lft + (rgt - lft) / 2;
-                cmp = strlen(KeyWdT[i].word) - strlen(ident);
-                if (cmp == 0) {
-                    cmp = strcmp(KeyWdT[i].word, ident);
-                }
-                if(cmp == 0) {
-                    temp.kind = KeyWdT[i].keyId;
-                    cToken = temp;
-                    printed = 0;
-                    return temp;
-                } else if (cmp > 0) {
-                    rgt = i;
-                } else if (cmp < 0) {
-                    lft = i;
-                }
-            } while (i > 0 && i < end_of_KeyWd);
-            // ユーザの宣言した名前の場合
+            /* 予約語の場合 */
+            if ((i = findKeyWd(ident)) != -1) {
+                temp.kind = KeyWdT[i].keyId;
+                cToken = temp;
+                printed = 0;
+                return temp;
+            }
+            /* ユーザの宣言した名前の場合 */
             temp.kind = Id;
             strcpy(temp.u.id, ident);
             break;
@@ -473,3 +427,58 @@ void setIdKind(KindT k)
 {
     idKind = k;
 }
+
+static int findKeyWd(char *m)
+{
+    int i;
+    int cmp;
+    int lft = 0;
+    int rgt = end_of_KeyWd;
+    do {
+        i = lft + (rgt - lft) / 2;
+        cmp = strcmp(m, KeyWdT[i].word);
+        if(cmp == 0) {
+            return i;
+        } else if ((rgt - lft) <= 1) {
+            break;
+        } else if (cmp < 0) {
+            rgt = i;
+        } else if (cmp > 0) {
+            lft = i;
+        }
+    } while (i > 0 && i < end_of_KeyWd);
+    return -1;
+}
+
+/* 空白や改行の印字 */
+static void printSpaces()
+{
+    while (CR-->0) {
+        fprintf(fptex, "\\ \\par\n");
+    }
+    while (spaces-->0) {
+        fprintf(fptex, "\\ ");
+    }
+    CR = 0;
+    spaces = 0;
+}
+
+/* 現在のトークンの印字 */
+void printcToken()
+{
+    int i = (int)cToken.kind;
+    if (printed) {
+        printed = 0;
+        return;
+    }
+
+    /* トークンの前の空白や改行印字 */
+    printSpaces();
+
+    /* 予約語 */
+    if (i < end_of_KeyWd) {
+        fprintf(fptex, "{\\bf %s}", KeyWdT[i].word);
+    }
+}
+
+

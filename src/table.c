@@ -14,15 +14,15 @@
 
 /* 名前表のエントリーの型 */
 typedef struct tableE {
-    KindT kind;             // 名前の種類
-    char name[MAXNAME];     // 名前のつづり
+    KindT kind;             /* 名前の種類 */
+    char name[MAXNAME];     /* 名前のつづり */
     union {
-        int value;          // 定数の場合: 値
+        int value;          /* 定数の場合: 値 */
         struct {
-            RelAddr raddr;  // 関数の場合: 先頭アドレス
-            int pars;       // 関数の場合: パラメタ数
+            RelAddr raddr;  /* 関数の場合: 先頭アドレス */
+            int pars;       /* 関数の場合: パラメタ数 */
         } f;
-        RelAddr raddr;      // 変数、パラメタの場合: アドレス
+        RelAddr raddr;      /* 変数、パラメタの場合: アドレス */
     } u;
 } TableE;
 
@@ -41,21 +41,21 @@ static int localAddr;
 static int tfIndex;
 
 /* 名前の種類の出力用関数 */
-// static char* kindName(KindT k)
-// {
-//     switch (k) {
-//         case varId: return "var";
-//         case parId: return "par";
-//         case funcId: return "func";
-//         case constId: return "const";
-//     }
-//     return NULL;
-// }
+static char* kindName(KindT k)
+{
+    switch (k) {
+        case varId: return "var";
+        case parId: return "par";
+        case funcId: return "func";
+        case constId: return "const";
+    }
+    return NULL;
+}
 
 /* ブロックの始まり（最初の変数の番地）で呼ばれる */
 void blockBegin(int firstAddr)
 {
-    // 主ブロックの時、初期設定
+    /* 主ブロックの時、初期設定 */
     if (level == -1) {
         localAddr = firstAddr;
         tIndex = 0;
@@ -120,7 +120,7 @@ int enterTpar(char *id)
     enterT(id);
     nameTable[tIndex].kind = parId;
     nameTable[tIndex].u.raddr.level = level;
-    nameTable[tIndex].u.f.pars++;
+    nameTable[tfIndex].u.f.pars++;
     return tIndex;
 }
 
@@ -200,6 +200,11 @@ int val(int ti)
 int pars(int ti)
 {
     return nameTable[ti].u.f.pars;
+}
+
+char* tname(int ti)
+{
+    return nameTable[ti].name;
 }
 
 /* そのブロックで実行時に必要とするメモリー容量 */

@@ -96,6 +96,7 @@ void constDecl()
             } else {
                 errorType("number");
             }
+            token = nextToken();
         } else {
             errorMissingId();
         }
