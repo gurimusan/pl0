@@ -56,6 +56,7 @@ static struct keyWd KeyWdT[] = {
     {"begin", Begin},
     {"const", Const},
     {"do", Do},
+    {"else", Else},
     {"end", End},
     {"function", Func},
     {"if", If},

@@ -10,7 +10,7 @@
 /* キーや文字の種類（名前） */
 typedef enum keys {
     Begin, End,
-    If, Then,
+    If, Then, Else,
     While, Do,
     Ret, Func,
     Var, Const, Odd,

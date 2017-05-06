@@ -204,6 +204,12 @@ void statement()
                 backP = genCodeV(jpc, 0);
                 statement();
                 backPatch(backP);
+                token = nextToken();
+                if (token.kind == Else) {
+                    backP = genCodeV(jpc, 0);
+                    statement();
+                    backPatch(backP);
+                }
                 return;
             case Ret:
                 token = nextToken();
